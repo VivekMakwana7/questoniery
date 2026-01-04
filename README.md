@@ -2100,3 +2100,107 @@ MaterialApp(
   home: const MyHomePage(),
 );
 ```
+
+# Debouncer Utility
+
+A utility class that helps to debounce function calls. This is particularly useful for filtering search inputs or preventing rapid-fire API calls during user interaction.
+
+The `Debouncer` will postpone the execution of a callback until a specified duration has passed since the last time it was invoked.
+
+### Usage
+
+1.  **Initialize the Debouncer:**
+    You can specify delay in seconds or as a `Duration` object.
+
+```dart
+// 500ms delay
+final searchDebouncer = Debouncer(duration: Duration(milliseconds: 500));
+
+// 1 second delay
+final apiDebouncer = Debouncer(seconds: 1);
+```
+
+2.  **Run an Action:**
+    Call `.run()` with your callback. Each call resets the timer.
+
+```dart
+TextField(
+  onChanged: (value) {
+    searchDebouncer.run(() {
+      print('Searching for: $value');
+      // performSearch(value);
+    });
+  },
+);
+```
+
+3.  **Dispose:**
+    Always cancel the timer when the widget or controller is disposed.
+
+```dart
+@override
+void dispose() {
+  searchDebouncer.dispose();
+  super.dispose();
+}
+```
+
+### Debouncer Class Code
+
+```dart
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+/// A utility class that helps to debounce function calls.
+///
+/// The [Debouncer] will postpone the execution of a callback until a specified duration
+/// has passed since the last time it was invoked. This is useful for scenarios such as
+/// search-as-you-type, where you want to wait for the user to stop typing before making
+/// a network request.
+///
+/// You can specify the debounce duration either by [seconds] or by providing a custom [duration].
+/// At least one of them must be non-null.
+///
+/// Example usage:
+/// ```dart
+/// final debouncer = Debouncer(seconds: 1);
+///
+/// // In your event handler:
+/// debouncer.run(() {
+///   // Your debounced code here
+/// });
+///
+/// // Don't forget to dispose when done
+/// debouncer.dispose();
+/// ```
+class Debouncer {
+  /// Creates a [Debouncer] that will delay execution by [seconds] or a custom [duration].
+  ///
+  /// At least one of [seconds] or [duration] must be non-null.
+  Debouncer({this.seconds, this.duration})
+    : assert(seconds != null || duration != null, 'Either seconds or duration must be provided.');
+
+  /// The debounce time in seconds. Optional if [duration] is provided.
+  final int? seconds;
+
+  /// The custom debounce [Duration]. Optional if [seconds] is provided.
+  final Duration? duration;
+
+  /// Internal timer used to track the debounce period.
+  Timer? _timer;
+
+  /// Runs the provided [action] after the debounce period.
+  ///
+  /// If called again before the debounce period ends, the previous timer is cancelled.
+  void run(VoidCallback action) {
+    _timer?.cancel();
+    _timer = Timer(duration ?? Duration(seconds: seconds ?? 0), action);
+  }
+
+  /// Cancels any active timer and cleans up resources.
+  void dispose() {
+    _timer?.cancel();
+  }
+}
+```
