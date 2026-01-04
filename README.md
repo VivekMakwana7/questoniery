@@ -631,3 +631,480 @@ class PickerUtils {
   }
 }
 ```
+
+# Flash Alert Extensions on BuildContext
+
+These extensions provide easy-to-use methods for showing floating error, success, and info alerts (toasts) using the [`flash`](https://pub.dev/packages/flash) package.
+
+### Dependencies
+
+Add `flash` to your `pubspec.yaml` file:
+
+```yaml
+dependencies:
+  flash: ^3.0.5 # Check pub.dev for the latest version
+```
+
+### Usage
+
+```dart
+// Show error
+context.showErrorAlert('Something went wrong!');
+
+// Show success
+context.showSuccessAlert('Operation successful!');
+
+// Show info
+context.showInfoAlert('This is some useful information.');
+```
+
+### ContextAlertX Extension Code
+
+```dart
+import 'package:flash/flash.dart';
+import 'package:flash/flash_helper.dart';
+import 'package:flutter/material.dart';
+
+extension ContextAlertX on BuildContext {
+  /// to show error alert
+  void showErrorAlert(String content, {Duration? duration}) => this.showFlash<void>(
+    builder: (context, controller) {
+      final errorColor = const Color(0xFFE57373);
+      return FlashBar(
+        controller: controller,
+        position: FlashPosition.top,
+        behavior: FlashBehavior.floating,
+        content: Text(content, style: textTheme.bodyMedium?.copyWith(color: Colors.white)),
+        backgroundColor: Colors.black,
+        indicatorColor: errorColor,
+        icon: Icon(Icons.error_outline, color: errorColor),
+        shouldIconPulse: false,
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        forwardAnimationCurve: Curves.bounceOut,
+      );
+    },
+    duration: duration ?? const Duration(seconds: 3),
+  );
+
+  /// to show success alert
+  void showSuccessAlert(String content, {Duration? duration}) => this.showFlash<void>(
+    builder: (context, controller) {
+      const successColor = Color(0xFF81C784);
+      return FlashBar(
+        controller: controller,
+        position: FlashPosition.top,
+        behavior: FlashBehavior.floating,
+        content: Text(content, style: textTheme.bodyMedium?.copyWith(color: Colors.white)),
+        backgroundColor: Colors.black,
+        indicatorColor: successColor,
+        icon: Icon(Icons.check_circle_outline, color: successColor),
+        shouldIconPulse: false,
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        forwardAnimationCurve: Curves.bounceOut,
+      );
+    },
+    duration: duration ?? const Duration(seconds: 3),
+  );
+
+  /// to show info alert
+  void showInfoAlert(String content) => this.showFlash<void>(
+    builder: (context, controller) {
+      const infoColor = Color(0xFF64B5F6);
+      return FlashBar(
+        controller: controller,
+        position: FlashPosition.top,
+        behavior: FlashBehavior.floating,
+        content: Text(content, style: textTheme.bodyMedium?.copyWith(color: Colors.white)),
+        backgroundColor: Colors.black,
+        indicatorColor: infoColor,
+        icon: Icon(Icons.info_outline, color: infoColor),
+        shouldIconPulse: false,
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        forwardAnimationCurve: Curves.bounceOut,
+      );
+    },
+    duration: const Duration(seconds: 2),
+  );
+}
+```
+
+# Minimum Build Context Extensions
+
+These extensions provide convenient access to common `BuildContext` properties like theme data, screen size, and padding, allowing for cleaner and more readable code.
+
+### Usage
+
+```dart
+// Access theme data
+final theme = context.theme;
+
+// Check for dark mode
+if (context.isDarkMode) {
+  // ...
+}
+
+// Get screen size
+final size = context.sizeOf;
+
+// Access custom theme extensions
+final appColors = context.appColors;
+```
+
+### BuildContextX Extension Code
+
+```dart
+import 'package:flutter/material.dart';
+
+extension BuildContextX on BuildContext {
+  /// Returns the current [ThemeData] from the [Theme] widget.
+  ///
+  /// Example:
+  /// ```dart
+  /// final theme = context.theme;
+  /// ```
+  ThemeData get theme => Theme.of(this);
+
+  /// Returns the current [TextTheme] from the current theme.
+  ///
+  /// Example:
+  /// ```dart
+  /// final textStyle = context.textTheme.bodyLarge;
+  /// ```
+  TextTheme get textTheme => theme.textTheme;
+
+  /// Returns the current [ColorScheme] from the current theme.
+  ///
+  /// Example:
+  /// ```dart
+  /// final primaryColor = context.colorScheme.primary;
+  /// ```
+  ColorScheme get colorScheme => theme.colorScheme;
+
+  /// Returns the custom [AppColors] extension registered in the theme.
+  ///
+  /// Example:
+  /// ```dart
+  /// final background = context.appColors.background;
+  /// ```
+  AppColors get appColors => theme.extension<AppColors>()!;
+
+  /// Returns the custom [AppTextColors] extension registered in the theme.
+  ///
+  /// Example:
+  /// ```dart
+  /// final titleColor = context.appTextColors.title;
+  /// ```
+  AppTextColors get appTextColors => theme.extension<AppTextColors>()!;
+
+  /// Returns the [Size] of the screen using `MediaQuery.sizeOf`.
+  ///
+  /// Example:
+  /// ```dart
+  /// final screenSize = context.sizeOf;
+  /// ```
+  Size get sizeOf => MediaQuery.sizeOf(this);
+
+  /// Returns the full screen width.
+  ///
+  /// Example:
+  /// ```dart
+  /// final screenWidth = context.width;
+  /// ```
+  double get width => sizeOf.width;
+
+  /// Returns the full screen height.
+  ///
+  /// Example:
+  /// ```dart
+  /// final screenHeight = context.height;
+  /// ```
+  double get height => sizeOf.height;
+
+  /// Returns true if the theme is dark mode.
+  ///
+  /// Example:
+  /// ```dart
+  /// final isDark = context.isDarkMode;
+  /// ```
+  bool get isDarkMode => theme.brightness == Brightness.dark;
+
+  /// Returns the padding from [MediaQuery], such as notch, status bar, or navigation bar.
+  ///
+  /// Example:
+  /// ```dart
+  /// final safePadding = context.paddingOf.top;
+  /// ```
+  EdgeInsets get paddingOf => MediaQuery.paddingOf(this);
+
+  /// Returns the view insets from [MediaQuery], such as the on-screen keyboard height.
+  ///
+  /// Example:
+  /// ```dart
+  /// final keyboardHeight = context.viewInsetsOf.bottom;
+  /// ```
+  EdgeInsets get viewInsetsOf => MediaQuery.viewInsetsOf(this);
+
+  /// Returns the view padding from [MediaQuery], representing system UI padding.
+  ///
+  /// Example:
+  /// ```dart
+  /// final statusBarPadding = context.viewPaddingOf.top;
+  /// ```
+  EdgeInsets get viewPaddingOf => MediaQuery.viewPaddingOf(this);
+
+  /// Returns the current device orientation, portrait or landscape.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (context.orientation == Orientation.portrait) { ... }
+  /// ```
+  Orientation get orientation => MediaQuery.orientationOf(this);
+
+  /// Unfocuses the current focused widget, typically used to dismiss the keyboard.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.unFocus();
+  /// ```
+  void unFocus() => FocusScope.of(this).unfocus();
+}
+```
+
+# AppColors Theme Extension
+
+This class allows you to define and access custom color schemes for both light and dark themes, extending the built-in `ThemeExtension` mechanism. It is used in conjunction with the `BuildContextX` extension (`context.appColors`).
+
+### Usage
+
+1.  **Register the extension in your `ThemeData`:**
+
+```dart
+MaterialApp(
+  theme: ThemeData(
+    extensions: <ThemeExtension<dynamic>>[
+      AppColors.light,
+    ],
+  ),
+  darkTheme: ThemeData(
+    brightness: Brightness.dark,
+    extensions: <ThemeExtension<dynamic>>[
+      AppColors.dark,
+    ],
+  ),
+  // ...
+)
+```
+
+2.  **Access colors in your widgets:**
+
+```dart
+final primary = context.appColors.primary;
+```
+
+### AppColors Class Code
+
+```dart
+import 'package:flutter/material.dart';
+
+/// A custom theme extension for app-specific colors.
+///
+/// This class allows you to define and access custom color schemes for both
+/// light and dark themes, extending the built-in ThemeExtension mechanism.
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  /// Creates an [AppColors] theme extension.
+  const AppColors({
+    required this.primary,
+    required this.secondary,
+    required this.scaffoldBackground,
+    required this.iconColor,
+    required this.disableColor,
+    required this.outlineColor,
+    required this.error,
+    required this.warning,
+  });
+
+  /// The primary color for the app.
+  final Color primary;
+
+  /// The secondary color for the app.
+  final Color secondary;
+
+  /// The scaffold color for the app.
+  final Color scaffoldBackground;
+
+  /// The icon color for the app.
+  final Color iconColor;
+
+  /// The disable color for the app.
+  final Color disableColor;
+
+  /// The outline color for the app.
+  final Color outlineColor;
+
+  /// The error color for the app.
+  final Color error;
+
+  /// The warning color for the app.
+  final Color warning;
+
+  /// The light color scheme instance.
+  static const AppColors light = AppColors(
+    primary: Color(0xFF24338C),
+    secondary: Color(0xFF34AD44),
+    scaffoldBackground: Color(0xFFF5F7FA),
+    iconColor: Color(0xFF2D2D2D),
+    disableColor: Color(0xFFE9E9E9),
+    outlineColor: Color(0xFFE9E9E9),
+    error: Color(0xFFBF1A1A),
+    warning: Color(0xFFEBB402),
+  );
+
+  /// The dark color scheme instance.
+  static const AppColors dark = AppColors(
+    primary: Color(0xFF3A4DB0),
+    // A lighter, less saturated blue-grey
+    secondary: Color(0xFF53BC62),
+    scaffoldBackground: Color(0xFF10121D),
+    // Example: Very dark grey
+    iconColor: Color(0xFFFFFFFF),
+    // Example: White for dark theme
+    disableColor: Color(0xFF3A3A3A),
+    // A dark grey for disabled state in dark theme
+    outlineColor: Color(0xFF333333),
+    // A dark grey for outlines in dark theme
+    error: Color(0xFFD94C4C),
+    // Lighter error red for dark theme
+    warning: Color(0xFFFFC107), // Lighter warning yellow for dark mode
+  );
+
+  @override
+  AppColors copyWith({
+    Color? primary,
+    Color? secondary,
+    Color? scaffoldBackground,
+    Color? iconColor,
+    Color? disableColor,
+    Color? outlineColor,
+    Color? error,
+    Color? warning,
+  }) {
+    return AppColors(
+      primary: primary ?? this.primary,
+      secondary: secondary ?? this.secondary,
+      scaffoldBackground: scaffoldBackground ?? this.scaffoldBackground,
+      iconColor: iconColor ?? this.iconColor,
+      disableColor: disableColor ?? this.disableColor,
+      outlineColor: outlineColor ?? this.outlineColor,
+      error: error ?? this.error,
+      warning: warning ?? this.warning,
+    );
+  }
+
+  @override
+  AppColors lerp(ThemeExtension<AppColors>? other, double t) {
+    if (other is! AppColors) return this;
+    return AppColors(
+      primary: Color.lerp(primary, other.primary, t)!,
+      secondary: Color.lerp(secondary, other.secondary, t)!,
+      scaffoldBackground: Color.lerp(scaffoldBackground, other.scaffoldBackground, t)!,
+      iconColor: Color.lerp(iconColor, other.iconColor, t)!,
+      disableColor: Color.lerp(disableColor, other.disableColor, t)!,
+      outlineColor: Color.lerp(outlineColor, other.outlineColor, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+    );
+  }
+}
+```
+
+# AppTextColors Theme Extension
+
+This class allows you to define and access custom text color schemes for both light and dark themes, extending the built-in `ThemeExtension` mechanism.
+
+### Usage
+
+1.  **Register the extension in your `ThemeData`:**
+
+```dart
+MaterialApp(
+  theme: ThemeData(
+    extensions: <ThemeExtension<dynamic>>[
+      AppColors.light,
+      AppTextColors.light,
+    ],
+  ),
+  darkTheme: ThemeData(
+    brightness: Brightness.dark,
+    extensions: <ThemeExtension<dynamic>>[
+      AppColors.dark,
+      AppTextColors.dark,
+    ],
+  ),
+  // ...
+)
+```
+
+2.  **Access colors in your widgets:**
+
+```dart
+final titleColor = context.appTextColors.primary;
+```
+
+### AppTextColors Class Code
+
+```dart
+import 'package:flutter/material.dart';
+
+/// A custom theme extension for app-specific text colors.
+///
+/// This class allows you to define and access custom text color schemes for both
+/// light and dark themes, extending the built-in ThemeExtension mechanism.
+@immutable
+class AppTextColors extends ThemeExtension<AppTextColors> {
+  /// Creates an [AppTextColors] theme extension.
+  const AppTextColors({required this.primary, required this.secondary, required this.textHint});
+
+  /// The primary text color for the app.
+  final Color primary;
+
+  /// The secondary/accent text color for the app (e.g., labels).
+  final Color secondary;
+
+  /// The text hint color for the app.
+  final Color textHint;
+
+  /// The light text color scheme instance.
+  static const AppTextColors light = AppTextColors(
+    primary: Color(0xFF2D2D2D), // #2D2D2D
+    secondary: Color(0xFF818181), // #818181
+    textHint: Color(0xFFC0C6CD), // #C0C6CD
+  );
+
+  /// The dark text color scheme instance.
+  static const AppTextColors dark = AppTextColors(
+    primary: Color(0xFFF8F9FB), // #F8F9FB
+    secondary: Color(0xFFA3A3A3), // #A3A3A3 (dark variant of #818181)
+    textHint: Color(0xFF6A7077), // #6A7077 (dark variant of #C0C6CD)
+  );
+
+  @override
+  AppTextColors copyWith({Color? primary, Color? secondary, Color? textHint}) {
+    return AppTextColors(
+      primary: primary ?? this.primary,
+      secondary: secondary ?? this.secondary,
+      textHint: textHint ?? this.textHint,
+    );
+  }
+
+  @override
+  AppTextColors lerp(ThemeExtension<AppTextColors>? other, double t) {
+    if (other is! AppTextColors) return this;
+    return AppTextColors(
+      primary: Color.lerp(primary, other.primary, t)!,
+      secondary: Color.lerp(secondary, other.secondary, t)!,
+      textHint: Color.lerp(textHint, other.textHint, t)!,
+    );
+  }
+}
+```
