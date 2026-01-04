@@ -638,11 +638,10 @@ These extensions provide easy-to-use methods for showing floating error, success
 
 ### Dependencies
 
-Add `flash` to your `pubspec.yaml` file:
+Run this command:
 
-```yaml
-dependencies:
-  flash: ^3.0.5 # Check pub.dev for the latest version
+```bash
+flutter pub add flash
 ```
 
 ### Usage
@@ -1106,5 +1105,449 @@ class AppTextColors extends ThemeExtension<AppTextColors> {
       textHint: Color.lerp(textHint, other.textHint, t)!,
     );
   }
+}
+```
+
+# DateTime Extension
+
+This extension simplifies common date and time operations, formatting, and checks.
+
+### Dependencies
+
+This extension relies on the `intl` package. Run this command:
+
+```bash
+flutter pub add intl
+```
+
+### Usage
+
+```dart
+final now = DateTime.now();
+
+// Formatting
+print(now.hm24); // 14:30
+print(now.hm12); // 2:30 PM
+print(now.dMy);  // 24/06/2025
+
+// Checks
+if (now.isToday) { ... }
+if (now.isWeekend) { ... }
+
+// Utils
+print(now.relativeLabel); // "Today", "Yesterday", or "21 Jun 2025"
+```
+
+### DateTimeX Extension Code
+
+```dart
+import 'package:intl/intl.dart';
+
+/// Extension on DateTime
+extension DateTimeX on DateTime {
+  // -----------------------------
+  // 🕒 Time Formatting
+  // -----------------------------
+
+  /// Returns time in 24-hour format: `HH:mm`.
+  ///
+  /// Example:
+  /// ```dart
+  /// final time = DateTime.now().hm24; // e.g., "14:30"
+  /// ```
+  String get hm24 => DateFormat.Hm().format(this);
+
+  /// Returns time in 12-hour format with AM/PM: `hh:mm a`.
+  ///
+  /// Example:
+  /// ```dart
+  /// final time = DateTime.now().hm12; // e.g., "2:30 PM"
+  /// ```
+  String get hm12 => DateFormat.jm().format(this);
+
+  // -----------------------------
+  // 📆 Date Checks
+  // -----------------------------
+
+  /// Returns `true` if this date is today.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isToday) print("Today");
+  /// ```
+  bool get isToday {
+    final now = DateTime.now();
+    return year == now.year && month == now.month && day == now.day;
+  }
+
+  /// Returns `true` if this date is yesterday.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isYesterday) print("Yesterday");
+  /// ```
+  bool get isYesterday {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return year == yesterday.year && month == yesterday.month && day == yesterday.day;
+  }
+
+  /// Returns `true` if this date is tomorrow.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isTomorrow) print("Tomorrow");
+  /// ```
+  bool get isTomorrow {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return year == tomorrow.year && month == tomorrow.month && day == tomorrow.day;
+  }
+
+  /// Returns `true` if this date is in the past.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isPast) print("This is a past date");
+  /// ```
+  bool get isPast => isBefore(DateTime.now());
+
+  /// Returns `true` if this date is in the future.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isFuture) print("This is a future date");
+  /// ```
+  bool get isFuture => isAfter(DateTime.now());
+
+  /// Returns the date formatted as "dd/MM/yyyy".
+  ///
+  /// Example:
+  /// ```dart
+  /// final formatted = DateTime.now().dMy; // e.g., "24/06/2025"
+  /// ```
+  String get dMy => DateFormat('dd/MM/yyyy').format(this);
+
+  /// Returns the date formatted using a custom format string.
+  ///
+  /// Example:
+  /// ```dart
+  /// final formatted = date.toFormat('yyyy-MM-dd');
+  /// ```
+  String toFormat(String format) => DateFormat(format).format(this);
+
+  // -----------------------------
+  // 🔁 Extras
+  // -----------------------------
+  /// Returns `true` if this date is the same as [other] (year, month, and day).
+  bool isSameDay(DateTime other) => year == other.year && month == other.month && day == other.day;
+
+  /// Returns the first day of the month.
+  DateTime get startDateOfMonth => DateTime(year, month, 1);
+
+  /// Returns the last day of the month.
+  DateTime get endDateOfMonth => DateTime(year, month + 1, 0);
+
+  /// Returns `true` if the date falls on Saturday or Sunday.
+  bool get isWeekend => weekday == DateTime.saturday || weekday == DateTime.sunday;
+
+  /// Returns a relative label such as "Today", "Yesterday", "Tomorrow",
+  /// or formatted as "d MMM y" (e.g., 21 Jun 2025).
+  String get relativeLabel {
+    if (isToday) return 'Today';
+    if (isYesterday) return 'Yesterday';
+    if (isTomorrow) return 'Tomorrow';
+    return dMMMy;
+  }
+
+  /// Returns the date formatted as "d MMM y" (e.g., 21 Jun 2025).
+  String get dMMMy => toFormat('d MMM y');
+
+  /// Returns true if this date is in the given range (inclusive).
+  ///
+  /// Example:
+  /// ```dart
+  /// if (date.isInRange(start, end)) print("In range");
+  /// ```
+  bool isInRange(DateTime start, DateTime end) => !isBefore(start) && !isAfter(end);
+}
+```
+
+# Int Extension
+
+This extension provides convenient getters for `Duration` conversions, range checks, and ordinal formatting.
+
+### Usage
+
+```dart
+// Duration conversions
+await Future.delayed(2.seconds);
+
+// Range check
+if (5.isInRange(1, 10)) {
+  print('In range');
+}
+
+// Ordinal format
+print(21.ordinal); // "21st"
+```
+
+### IntX Extension Code
+
+```dart
+/// Extension On Int
+extension IntX on int {
+  // -----------------------
+  // ⏱️ Duration conversions
+  // -----------------------
+
+  /// Converts the int to a [Duration] in seconds.
+  ///
+  /// Example:
+  /// ```dart
+  /// 5.seconds => Duration(seconds: 5)
+  /// ```
+  Duration get seconds => Duration(seconds: this);
+
+  /// Converts the int to a [Duration] in minutes.
+  ///
+  /// Example:
+  /// ```dart
+  /// 2.minutes => Duration(minutes: 2)
+  /// ```
+  Duration get minutes => Duration(minutes: this);
+
+  /// Converts the int to a [Duration] in hours.
+  ///
+  /// Example:
+  /// ```dart
+  /// 1.hours => Duration(hours: 1)
+  /// ```
+  Duration get hours => Duration(hours: this);
+
+  /// Converts the int to a [Duration] in milliseconds.
+  ///
+  /// Example:
+  /// ```dart
+  /// 500.milliseconds => Duration(milliseconds: 500)
+  /// ```
+  Duration get milliseconds => Duration(milliseconds: this);
+
+  /// Converts the int to a [Duration] in microseconds.
+  ///
+  /// Example:
+  /// ```dart
+  /// 100.microseconds => Duration(microseconds: 100)
+  /// ```
+  Duration get microseconds => Duration(microseconds: this);
+
+  // -----------------------
+  // ✅ Range validation
+  // -----------------------
+
+  /// Returns `true` if this int is between [min] and [max], inclusive.
+  ///
+  /// Example:
+  /// ```dart
+  /// 5.isInRange(1, 10); // true
+  /// 15.isInRange(1, 10); // false
+  /// ```
+  bool isInRange(int min, int max) => this >= min && this <= max;
+
+  // -----------------------
+  // 🔁 Boolean conversion
+  // -----------------------
+
+  /// Returns `true` if the int is non-zero.
+  ///
+  /// Example:
+  /// ```dart
+  /// 1.asBool => true
+  /// 0.asBool => false
+  /// ```
+  bool get asBool => this != 0;
+
+  // -----------------------
+  // 🔢 Ordinal formatter
+  // -----------------------
+
+  /// Converts the integer to its ordinal representation.
+  ///
+  /// Example:
+  /// ```dart
+  /// 1.ordinal => '1st'
+  /// 2.ordinal => '2nd'
+  /// 3.ordinal => '3rd'
+  /// 4.ordinal => '4th'
+  /// 11.ordinal => '11th'
+  /// 21.ordinal => '21st'
+  /// ```
+  String get ordinal {
+    if ((this % 100 >= 11) && (this % 100 <= 13)) {
+      return '${this}th';
+    }
+    switch (this % 10) {
+      case 1:
+        return '${this}st';
+      case 2:
+        return '${this}nd';
+      case 3:
+        return '${this}rd';
+      default:
+        return '${this}th';
+  }
+}
+```
+
+# Num Extension
+
+This extension provides convenient formatting for numbers, including comma separation, percentage, compact notation, currency, and file size conversions.
+
+### Usage
+
+```dart
+// Formatting
+print(1234567.commaSeparated); // "1,234,567"
+print(0.25.toPercentage);      // "25%"
+print(1200.compact);           // "1.2K"
+
+// Currency
+print(1234.56.toCurrency());             // ₹1,234.56
+print(1234.56.toCurrency(symbol: '\$')); // $1,234.56
+
+// File Size
+print(1024.toKB()); // 1.0
+```
+
+### NumX Extension Code
+
+```dart
+import 'package:intl/intl.dart';
+
+/// Extension of Num
+extension NumX on num {
+  /// Returns the number formatted with commas as thousands separators.
+  ///
+  /// Example:
+  /// ```dart
+  /// 1234567.commaSeparated => '1,234,567'
+  /// ```
+  String get commaSeparated => NumberFormat.decimalPattern().format(this);
+
+  /// Returns the number formatted as a percentage string (e.g., "25%").
+  ///
+  /// Example:
+  /// ```dart
+  /// 0.25.toPercentage => '25%'
+  /// 0.789.toPercentage => '78.9%'
+  /// ```
+  String get toPercentage => NumberFormat.percentPattern().format(this);
+
+  /// Returns the number in a compact form (e.g., 1.2K, 3.4M).
+  ///
+  /// Example:
+  /// ```dart
+  /// 1200.compact => '1.2K'
+  /// 3400000.compact => '3.4M'
+  /// ```
+  String get compact => NumberFormat.compact().format(this);
+
+  /// Returns the number formatted as currency.
+  ///
+  /// You can optionally specify a [symbol] (default: '₹') and [decimalDigits].
+  ///
+  /// Example:
+  /// ```dart
+  /// 1234.56.toCurrency();           // ₹1,234.56
+  /// 1234.56.toCurrency(symbol: '\$'); // $1,234.56
+  /// ```
+  String toCurrency({String symbol = '₹', int decimalDigits = 2}) {
+    return NumberFormat.currency(symbol: symbol, decimalDigits: decimalDigits).format(this);
+  }
+
+  // -----------------------
+  // 📏 Size conversions
+  // -----------------------
+
+  /// Converts the int (bytes) to kilobytes as double.
+  ///
+  /// Example:
+  /// ```dart
+  /// 1024.toKB(); // 1.0
+  /// ```
+  double toKB() => this / 1024;
+
+  /// Converts the int (bytes) to megabytes as double.
+  ///
+  /// Example:
+  /// ```dart
+  /// (1024 * 1024).toMB(); // 1.0
+  /// ```
+  double toMB() => this / (1024 * 1024);
+
+  /// Converts the int (bytes) to gigabytes as double.
+  ///
+  /// Example:
+  /// ```dart
+  /// (1024 * 1024 * 1024).toGB(); // 1.0
+  /// ```
+  double toGB() => this / (1024 * 1024 * 1024);
+}
+```
+
+# Object Nullable Extension
+
+This extension provides a universal way to check if an object (String, List, Map, etc.) is null or empty.
+
+### Usage
+
+```dart
+String? name = '';
+print(name.isNullOrEmpty); // true
+
+List? items = [1, 2];
+print(items.isNotNullOrEmpty); // true
+```
+
+### ObjectNullableX Extension Code
+
+```dart
+/// Extension on Nullable Object
+extension ObjectNullableX on Object? {
+  /// Returns `true` if the object is `null` or considered "empty".
+  ///
+  /// - For `String`, `Iterable`, `Map`, etc., it checks `.isEmpty`.
+  /// - For all other types, only checks for `null`.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// String? name = '';
+  /// print(name.isNullOrEmpty); // true
+  ///
+  /// List? items = null;
+  /// print(items.isNullOrEmpty); // true
+  ///
+  /// var map = <String, dynamic>{};
+  /// print(map.isNullOrEmpty); // true
+  /// ```
+  bool get isNullOrEmpty {
+    if (this == null) return true;
+
+    if (this is String) return (this as String).isEmpty;
+    if (this is Iterable) return (this as Iterable).isEmpty;
+    if (this is Map) return (this as Map).isEmpty;
+
+    return false; // Not null and not a known "empty" type
+  }
+
+  /// Returns `true` if the object is not `null` and not empty.
+  ///
+  /// ### Example:
+  /// ```dart
+  /// String? name = 'hello';
+  /// print(name.isNotNullOrEmpty); // true
+  ///
+  /// List numbers = [1, 2, 3];
+  /// print(numbers.isNotNullOrEmpty); // true
+  /// ```
+  bool get isNotNullOrEmpty => !isNullOrEmpty;
 }
 ```
