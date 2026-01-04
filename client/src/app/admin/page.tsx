@@ -23,7 +23,8 @@ export default function AdminPage() {
     const fetchReadme = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('http://localhost:4000/chat/readme');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/chat';
+            const response = await fetch(`${apiUrl}/readme`);
             const data = await response.json();
             setReadmeContent(data.content);
         } catch (error) {
@@ -38,7 +39,8 @@ export default function AdminPage() {
         setIsLoading(true);
         setStatus({ type: null, message: '' });
         try {
-            const response = await fetch('http://localhost:4000/chat/readme', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/chat';
+            const response = await fetch(`${apiUrl}/readme`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

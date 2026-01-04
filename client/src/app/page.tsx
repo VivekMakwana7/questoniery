@@ -154,7 +154,8 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/chat', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/chat';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg.content }),
@@ -175,7 +176,7 @@ export default function Home() {
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        content: 'Sorry, something went wrong connecting to the server. Is it running on port 4000?',
+        content: 'Sorry, something went wrong connecting to the server. Please check if the backend is online.',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMsg]);
