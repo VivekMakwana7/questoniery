@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -13,7 +13,7 @@ interface Message {
   timestamp: Date;
 }
 
-const CodeBlock = ({ language, children, ...props }: any) => {
+const CodeBlock = memo(({ language, children, ...props }: any) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -49,7 +49,7 @@ const CodeBlock = ({ language, children, ...props }: any) => {
           )}
         </button>
       </div>
-      <div className="p-0">
+      <div className="p-0 text-sm">
         <SyntaxHighlighter
           style={vscDarkPlus}
           language={language}
@@ -64,7 +64,59 @@ const CodeBlock = ({ language, children, ...props }: any) => {
       </div>
     </div>
   );
-};
+});
+
+const MessageItem = memo(({ msg }: { msg: Message }) => {
+  return (
+    <div
+      className={classNames("flex w-full group", {
+        "justify-end": msg.role === 'user',
+        "justify-start": msg.role === 'bot',
+      })}
+    >
+      <div
+        className={classNames(
+          "max-w-[85%] md:max-w-[75%] rounded-2xl px-6 py-4 shadow-sm transition-all duration-200",
+          {
+            "bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-br-none shadow-indigo-500/10": msg.role === 'user',
+            "bg-slate-900/80 border border-white/5 text-slate-200 rounded-bl-none hover:bg-slate-900": msg.role === 'bot',
+          }
+        )}
+      >
+        {msg.role === 'bot' ? (
+          <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-950/50 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-xl">
+            <ReactMarkdown
+              components={{
+                code({ node, inline, className, children, ...props }: any) {
+                  const match = /language-(\w+)/.exec(className || '')
+                  return !inline && match ? (
+                    <CodeBlock language={match[1]} {...props}>
+                      {children}
+                    </CodeBlock>
+                  ) : (
+                    <code className="bg-white/10 px-1.5 py-0.5 rounded text-indigo-200 font-mono text-xs" {...props}>
+                      {children}
+                    </code>
+                  )
+                }
+              }}
+            >
+              {msg.content}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+        )}
+        <div className={classNames("text-[10px] mt-2 font-medium opacity-60 uppercase tracking-wider flex items-center gap-1", {
+          "text-indigo-200 justify-end": msg.role === 'user',
+          "text-slate-500 justify-start": msg.role === 'bot'
+        })}>
+          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
@@ -172,54 +224,7 @@ export default function Home() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scroll-smooth scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent hover:scrollbar-thumb-slate-600">
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={classNames("flex w-full group", {
-                "justify-end": msg.role === 'user',
-                "justify-start": msg.role === 'bot',
-              })}
-            >
-              <div
-                className={classNames(
-                  "max-w-[85%] md:max-w-[75%] rounded-2xl px-6 py-4 shadow-sm transition-all duration-200",
-                  {
-                    "bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-br-none shadow-indigo-500/10": msg.role === 'user',
-                    "bg-slate-900/80 border border-white/5 text-slate-200 rounded-bl-none hover:bg-slate-900": msg.role === 'bot',
-                  }
-                )}
-              >
-                {msg.role === 'bot' ? (
-                  <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-slate-950/50 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-xl">
-                    <ReactMarkdown
-                      components={{
-                        code({ node, inline, className, children, ...props }: any) {
-                          const match = /language-(\w+)/.exec(className || '')
-                          return !inline && match ? (
-                            <CodeBlock language={match[1]} {...props}>
-                              {children}
-                            </CodeBlock>
-                          ) : (
-                            <code className="bg-white/10 px-1.5 py-0.5 rounded text-indigo-200 font-mono text-xs" {...props}>
-                              {children}
-                            </code>
-                          )
-                        }
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-                )}
-                <div className={classNames("text-[10px] mt-2 font-medium opacity-60 uppercase tracking-wider flex items-center gap-1", {
-                  "text-indigo-200 justify-end": msg.role === 'user',
-                  "text-slate-500 justify-start": msg.role === 'bot'
-                })}>
-                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
+            <MessageItem key={msg.id} msg={msg} />
           ))}
 
           {isLoading && (
