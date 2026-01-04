@@ -2271,7 +2271,9 @@ TextFormField(
 
 ```dart
 import 'package:intl/intl.dart';
-import 'package:pkg_ui/pkg_ui.dart';
+
+/// A callback function that returns a validation error message or null.
+typedef FieldValidator = String? Function(String? value);
 
 /// A utility class for common form field validations.
 ///
@@ -2493,4 +2495,524 @@ class Validator {
       (value) => value.isNotNullOrEmpty && value!.trim().isEmpty ? msg : null;
 }
 
+```
+
+
+## Common Widgets
+
+### App Cached Image Widget
+
+A widget that caches images using the [cached_network_image](https://pub.dev/packages/cached_network_image) package.
+
+```bash
+flutter pub add cached_network_image
+```
+
+#### Usage
+```dart
+AppCachedImage(
+  url: 'https://example.com/image.png',
+)
+```
+
+```dart
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+
+/// AppCachedImage Widget is used to show a cached image.
+class AppCachedImage extends StatelessWidget {
+  /// Default Constructor
+  const AppCachedImage({
+    required this.url,
+    super.key,
+    this.fit,
+    this.memCacheWidth,
+    this.memCacheHeight,
+    this.placeholder,
+    this.errorWidget,
+    this.imageBuilder,
+  });
+
+  /// The target image that is displayed.
+  final String url;
+
+  /// To set box fit
+  final BoxFit? fit;
+
+  /// To set cached network image mem cache width
+  final int? memCacheWidth;
+
+  /// To set cached network image mem cache height
+  final int? memCacheHeight;
+
+  /// Placeholder widget builder
+  final PlaceholderWidgetBuilder? placeholder;
+
+  /// Error widget builder
+  final LoadingErrorWidgetBuilder? errorWidget;
+
+  /// Image builder
+  final ImageWidgetBuilder? imageBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      key: ValueKey(url),
+      imageUrl: url,
+      fit: fit,
+      memCacheWidth: memCacheWidth,
+      memCacheHeight: memCacheHeight,
+      fadeOutDuration: Duration.zero,
+      fadeInDuration: Duration.zero,
+      placeholderFadeInDuration: Duration.zero,
+      imageBuilder: imageBuilder,
+      placeholder:
+          placeholder ??
+          (context, url) => Skeletonizer(
+            effect: ShimmerEffect(
+              baseColor: context.appColors.primary.withAlpha((0.1 * 255).round()),
+              highlightColor: context.appColors.primary.withAlpha((0.2 * 255).round()),
+            ),
+            child: const ColoredBox(color: Colors.white),
+          ),
+      errorWidget: errorWidget ?? (context, url, error) => const Center(child: Icon(Icons.broken_image_rounded)),
+    );
+  }
+}
+```
+
+### App Text Widget
+Common App Text widget with default style and color.
+
+#### Usage
+```dart
+AppText.bodyMedium('Hello world', color: Colors.red, maxLines: 2),
+```
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:pkg_ui/pkg_ui.dart';
+
+/// A convenience widget for displaying text using the app's Material 3 text theme.
+///
+/// [AppText] provides factory constructors for each style defined in the app's text theme
+/// (see [appTextThemeLight] and [appTextThemeDark]), such as display, headline, title, body, and label styles.
+///
+/// Each factory constructor allows you to specify the most common text arguments:
+///   - [text]: The string to display (required)
+///   - [color]: Optionally override the text color
+///   - [maxLines]: Maximum number of lines for the text
+///   - [overflow]: How visual overflow should be handled (e.g., ellipsis)
+///   - [textAlign]: How the text should be aligned
+///
+/// The widget automatically uses the current theme's [TextTheme] (from [BuildContext])
+/// and applies the correct style variant. This ensures consistent typography across the app.
+///
+/// Each style's default font size and weight are based on the app's text theme:
+///   - displayLarge: 57sp, w400
+///   - displayMedium: 45sp, w400
+///   - displaySmall: 36sp, w400
+///   - headlineLarge: 32sp, w400
+///   - headlineMedium: 28sp, w400
+///   - headlineSmall: 24sp, w400
+///   - titleLarge: 22sp, w400
+///   - titleMedium: 16sp, w500
+///   - titleSmall: 14sp, w500
+///   - bodyLarge: 16sp, w400
+///   - bodyMedium: 14sp, w400
+///   - bodySmall: 12sp, w400
+///   - labelLarge: 14sp, w500
+///   - labelMedium: 12sp, w500
+///   - labelSmall: 11sp, w500
+///
+/// Example usage:
+/// ```dart
+/// AppText.bodyMedium('Hello world', color: Colors.red, maxLines: 2)
+/// AppText.titleLarge('Section Title', textAlign: TextAlign.center)
+/// ```
+class AppText extends StatelessWidget {
+  /// Private constructor. Use one of the named factory constructors.
+  const AppText._({
+    super.key,
+    required this.text,
+    required this.textStyleBuilder,
+    this.maxLines,
+    this.textOverflow,
+    this.textAlign,
+  });
+
+  /// The string to display.
+  final String text;
+
+  /// A function that returns the appropriate [TextStyle] from the current [BuildContext].
+  final TextStyle? Function(BuildContext) textStyleBuilder;
+
+  /// Maximum number of lines for the text.
+  final int? maxLines;
+
+  /// How visual overflow should be handled (e.g., ellipsis).
+  final TextOverflow? textOverflow;
+
+  /// How the text should be aligned.
+  final TextAlign? textAlign;
+
+  /// Display Large text style (e.g., for hero numbers or splash titles).
+  ///
+  /// Uses [TextTheme.displayLarge].
+  ///
+  /// Default: size 57sp, weight w400
+  ///
+  /// Example: `AppText.displayLarge('Big Title')`
+  factory AppText.displayLarge(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.displayLarge?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Display Medium text style.
+  ///
+  /// Uses [TextTheme.displayMedium].
+  ///
+  /// Default: size 45sp, weight w400
+  factory AppText.displayMedium(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.displayMedium?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Display Small text style.
+  ///
+  /// Uses [TextTheme.displaySmall].
+  ///
+  /// Default: size 36sp, weight w400
+  factory AppText.displaySmall(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.displaySmall?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Headline Large text style (e.g., for page titles).
+  ///
+  /// Uses [TextTheme.headlineLarge].
+  ///
+  /// Default: size 32sp, weight w400
+  factory AppText.headlineLarge(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.headlineLarge?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Headline Medium text style.
+  ///
+  /// Uses [TextTheme.headlineMedium].
+  ///
+  /// Default: size 28sp, weight w400
+  factory AppText.headlineMedium(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.headlineMedium?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Headline Small text style.
+  ///
+  /// Uses [TextTheme.headlineSmall].
+  ///
+  /// Default: size 24sp, weight w400
+  factory AppText.headlineSmall(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.headlineSmall?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Title Large text style (e.g., for section headers).
+  ///
+  /// Uses [TextTheme.titleLarge].
+  ///
+  /// Default: size 22sp, weight w400
+  factory AppText.titleLarge(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.titleLarge?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Title Medium text style.
+  ///
+  /// Uses [TextTheme.titleMedium].
+  ///
+  /// Default: size 16sp, weight w500
+  factory AppText.titleMedium(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.titleMedium?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Title Small text style.
+  ///
+  /// Uses [TextTheme.titleSmall].
+  ///
+  /// Default: size 14sp, weight w500
+  factory AppText.titleSmall(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.titleSmall?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Body Large text style (e.g., for main content text).
+  ///
+  /// Uses [TextTheme.bodyLarge].
+  ///
+  /// Default: size 16sp, weight w400
+  factory AppText.bodyLarge(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.bodyLarge?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Body Medium text style (default for most text).
+  ///
+  /// Uses [TextTheme.bodyMedium].
+  ///
+  /// Default: size 14sp, weight w400
+  factory AppText.bodyMedium(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.bodyMedium?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Body Small text style (e.g., for captions or footnotes).
+  ///
+  /// Uses [TextTheme.bodySmall].
+  ///
+  /// Default: size 12sp, weight w400
+  factory AppText.bodySmall(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.bodySmall?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Label Large text style (e.g., for prominent labels or buttons).
+  ///
+  /// Uses [TextTheme.labelLarge].
+  ///
+  /// Default: size 14sp, weight w500
+  factory AppText.labelLarge(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.labelLarge?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Label Medium text style.
+  ///
+  /// Uses [TextTheme.labelMedium].
+  ///
+  /// Default: size 12sp, weight w500
+  factory AppText.labelMedium(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.labelMedium?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Label Small text style (e.g., for helper text or small labels).
+  ///
+  /// Uses [TextTheme.labelSmall].
+  ///
+  /// Default: size 11sp, weight w500
+  factory AppText.labelSmall(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.labelSmall?.copyWith(color: color),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  /// Body Medium text style with custom options.
+  ///
+  /// Use this only when a style from the text theme doesn't match the design.
+  ///
+  /// Uses [TextTheme.bodyMedium] and allows overriding properties like [fontWeight], [fontStyle], and [fontSize].
+  ///
+  /// Base Style: size 14sp, weight w400
+  factory AppText.bodyCustom(
+    String text, {
+    Key? key,
+    Color? color,
+    int? maxLines,
+    TextOverflow? overflow,
+    TextAlign? textAlign,
+    FontWeight? fontWeight,
+    FontStyle? fontStyle,
+    double? fontSize,
+  }) => AppText._(
+    key: key,
+    text: text,
+    textStyleBuilder: (context) => context.textTheme.bodyMedium?.copyWith(
+      color: color,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+      fontSize: fontSize,
+    ),
+    maxLines: maxLines,
+    textOverflow: overflow,
+    textAlign: textAlign,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: textStyleBuilder(context),
+      maxLines: maxLines,
+      overflow: textOverflow,
+      textAlign: textAlign,
+    );
+  }
+}
 ```
