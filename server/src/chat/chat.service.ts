@@ -22,13 +22,27 @@ export class ChatService {
     }
 
     async askQuestion(question: string) {
+        // Always try to get the latest content (cache or disk)
         const readmeContent = this.getReadme();
         const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         const prompt = `
-      You are a helpful project assistant. Use the following README content to answer the user's question.
-      If the answer isn't in the README, say "I don't have information on that."
+      You are an expert project assistant. Your primary knowledge base is the "README Content" provided below.
       
+      INSTRUCTIONS:
+      1. Search the provided README Content thoroughly for any information related to the question.
+      2. If the answer is found, provide a detailed response based on it.
+      3. If the answer is NOT explicitly in the README:
+         - Try to infer the answer if it relates to standard Flutter/Next.js/NestJS patterns used in this project.
+         - If it's a general tech question (like "How to add a dependency"), you can provide the standard command (e.g., "flutter pub add ...") as a helpful assistant.
+         - Only say "I don't have information on that" if the question is completely irrelevant to the project or its technology stack.
+      
+      FORMATTING RULES:
+      - Always place sub-content, detailed explanations, or multi-step information on a NEW LINE to improve readability.
+      - If you provide any commands (like "flutter pub add") or code snippets, ALWAYS wrap them in a standard markdown code block (e.g., \`\`\`bash ... \`\`\`).
+      - Ensure every code block is preceded and followed by at least one empty line.
+      - Do not combine multiple distinct pieces of information on the same line.
+
       README Content:
       ${readmeContent}
       
@@ -37,7 +51,10 @@ export class ChatService {
 
         try {
             const result = await model.generateContent(prompt);
-            return result.response.text();
+            let response = result.response.text();
+
+            // If the AI somehow still gives a generic "don't know" response, we can add a fallback or logging here.
+            return response;
         } catch (error: any) {
             console.error('Gemini API Error:', error);
             if (error.message?.includes('API key not valid')) {
