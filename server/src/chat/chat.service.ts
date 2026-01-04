@@ -7,6 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 @Injectable()
 export class ChatService {
     private genAI: GoogleGenerativeAI;
+    private readmeCache: string | null = null;
 
     constructor(private configService: ConfigService) {
         const rawApiKey = 'AIzaSyDUM3cSnVgGMkL574KEwMtANhkJiz2GJ3M';
@@ -47,17 +48,24 @@ export class ChatService {
     }
 
     getReadme(): string {
+        if (this.readmeCache) {
+            console.log('[DEBUG] Returning README from cache');
+            return this.readmeCache;
+        }
+
         const readmePath = path.join(process.cwd(), '../README.md');
         try {
+            let content = '';
             if (fs.existsSync(readmePath)) {
-                return fs.readFileSync(readmePath, 'utf8');
+                content = fs.readFileSync(readmePath, 'utf8');
+            } else if (fs.existsSync('./README.md')) {
+                content = fs.readFileSync('./README.md', 'utf8');
             } else {
-                if (fs.existsSync('./README.md')) {
-                    return fs.readFileSync('./README.md', 'utf8');
-                } else {
-                    return 'No README file found.';
-                }
+                return 'No README file found.';
             }
+
+            this.readmeCache = content;
+            return content;
         } catch (e) {
             console.error("Failed to read README", e);
             return 'Error reading README file.';
@@ -67,17 +75,24 @@ export class ChatService {
     updateReadme(content: string): boolean {
         const readmePath = path.join(process.cwd(), '../README.md');
         try {
+            let success = false;
             if (fs.existsSync(readmePath)) {
                 fs.writeFileSync(readmePath, content, 'utf8');
-                return true;
-            }
-            if (fs.existsSync('./README.md')) {
+                success = true;
+            } else if (fs.existsSync('./README.md')) {
                 fs.writeFileSync('./README.md', content, 'utf8');
-                return true;
+                success = true;
+            } else {
+                // Default create in root
+                fs.writeFileSync(readmePath, content, 'utf8');
+                success = true;
             }
-            // Default create in root
-            fs.writeFileSync(readmePath, content, 'utf8');
-            return true;
+
+            if (success) {
+                this.readmeCache = content;
+                console.log('[DEBUG] README cache updated');
+            }
+            return success;
         } catch (e) {
             console.error("Failed to update README", e);
             return false;
