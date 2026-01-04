@@ -23,32 +23,45 @@ const CodeBlock = ({ language, children, ...props }: any) => {
   };
 
   return (
-    <div className="relative group/code">
-      <button
-        onClick={handleCopy}
-        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white transition-colors opacity-0 group-hover/code:opacity-100 z-10"
-        title="Copy code"
-      >
-        {copied ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        )}
-      </button>
-      <SyntaxHighlighter
-        style={vscDarkPlus}
-        language={language}
-        PreTag="div"
-        {...props}
-        customStyle={{ margin: 0, background: 'transparent' }}
-      >
-        {String(children).replace(/\n$/, '')}
-      </SyntaxHighlighter>
+    <div className="relative group/code my-4 rounded-xl overflow-hidden border border-white/10 bg-[#1e1e1e] shadow-lg">
+      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5 backdrop-blur-sm">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">{language || 'text'}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors"
+          title="Copy to clipboard"
+        >
+          {copied ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-emerald-400">Copied!</span>
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+      <div className="p-0">
+        <SyntaxHighlighter
+          style={vscDarkPlus}
+          language={language}
+          PreTag="div"
+          showLineNumbers={true}
+          lineNumberStyle={{ minWidth: "3em", paddingRight: "1em", color: "#475569", textAlign: "right", userSelect: "none" }}
+          {...props}
+          customStyle={{ margin: 0, background: 'transparent', padding: '1rem', fontSize: '0.875rem', lineHeight: '1.5' }}
+        >
+          {String(children).replace(/\n$/, '')}
+        </SyntaxHighlighter>
+      </div>
     </div>
   );
 };

@@ -21,31 +21,9 @@ export class ChatService {
     }
 
     async askQuestion(question: string) {
-        // 1. Read your README.md file
-        // Adjusted path to read from project root relative to server directory
-        const readmePath = path.join(process.cwd(), '../README.md');
-        let readmeContent = '';
-
-        try {
-            if (fs.existsSync(readmePath)) {
-                readmeContent = fs.readFileSync(readmePath, 'utf8');
-            } else {
-                // Fallback to local readme or empty
-                // console.warn('Root README not found, checking local...');
-                if (fs.existsSync('./README.md')) {
-                    readmeContent = fs.readFileSync('./README.md', 'utf8');
-                } else {
-                    readmeContent = 'No README file found.';
-                }
-            }
-        } catch (e) {
-            console.error("Failed to read README", e);
-            readmeContent = 'Error reading README file.';
-        }
-
+        const readmeContent = this.getReadme();
         const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-        // 2. Create a "System Prompt" to give the AI context
         const prompt = `
       You are a helpful project assistant. Use the following README content to answer the user's question.
       If the answer isn't in the README, say "I don't have information on that."
@@ -65,6 +43,44 @@ export class ChatService {
                 return "Error: Invalid API Key. Please check your .env file.";
             }
             return `Error generating response: ${error.message}`;
+        }
+    }
+
+    getReadme(): string {
+        const readmePath = path.join(process.cwd(), '../README.md');
+        try {
+            if (fs.existsSync(readmePath)) {
+                return fs.readFileSync(readmePath, 'utf8');
+            } else {
+                if (fs.existsSync('./README.md')) {
+                    return fs.readFileSync('./README.md', 'utf8');
+                } else {
+                    return 'No README file found.';
+                }
+            }
+        } catch (e) {
+            console.error("Failed to read README", e);
+            return 'Error reading README file.';
+        }
+    }
+
+    updateReadme(content: string): boolean {
+        const readmePath = path.join(process.cwd(), '../README.md');
+        try {
+            if (fs.existsSync(readmePath)) {
+                fs.writeFileSync(readmePath, content, 'utf8');
+                return true;
+            }
+            if (fs.existsSync('./README.md')) {
+                fs.writeFileSync('./README.md', content, 'utf8');
+                return true;
+            }
+            // Default create in root
+            fs.writeFileSync(readmePath, content, 'utf8');
+            return true;
+        } catch (e) {
+            console.error("Failed to update README", e);
+            return false;
         }
     }
 }
