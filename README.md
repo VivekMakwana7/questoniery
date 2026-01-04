@@ -2214,7 +2214,6 @@ A utility class for logging messages with different severity levels (info, warni
 'Hello World'.logD;
 ```
 
-
 ```dart
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
@@ -2254,6 +2253,244 @@ class _LogFilter extends LogFilter {
       _ => false,
     };
   }
+}
+
+```
+
+### Text Form field Validator Utils class
+
+A utility class for common form field validations. Provide static methods to generate [FieldValidator]s for various validation scenarios such as required fields, email, minimum/maximum length, regex, and more.
+
+#### Usage
+
+```dart
+TextFormField(
+  validator: Validator.required('This field is required'),
+)
+```
+
+```dart
+import 'package:intl/intl.dart';
+import 'package:pkg_ui/pkg_ui.dart';
+
+/// A utility class for common form field validations.
+///
+/// Provides static methods to generate [FieldValidator]s for various validation scenarios
+/// such as required fields, email, minimum/maximum length, regex, and more.
+///
+/// Example usage:
+/// ```dart
+/// TextFormField(
+///   validator: Validator.required('This field is required'),
+/// )
+/// ```
+class Validator {
+  static const String _emailPattern =
+      r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+
+  static const String _letterPattern = r'[a-zA-Z]';
+  static const String _numberPattern = r'[0-9]';
+  static const String _specialCharPattern = r'[!@#\$%^&*(),.?":{}|<>]';
+  static const String _upperCasePattern = r'[A-Z]';
+  static const String _lowerCasePattern = r'[a-z]';
+
+  /// Returns a validator that checks if the field is not empty or not null.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.required('This field is required')
+  /// ```
+  static FieldValidator required(String msg) =>
+      (value) => !isValidRequired(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains a valid email address.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.email('Enter a valid email')
+  /// ```
+  static FieldValidator email(String msg) =>
+      (value) => !isValidEmail(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains at least one letter.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasLetter('Must contain a letter')
+  /// ```
+  static FieldValidator hasLetter(String msg) =>
+      (value) => !isHasLetter(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains at least one number.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasNumber('Must contain a number')
+  /// ```
+  static FieldValidator hasNumber(String msg) =>
+      (value) => !isHasNumber(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains at least one special character.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasSpecialChar('Must contain a special character')
+  /// ```
+  static FieldValidator hasSpecialChar(String msg) =>
+      (value) => !isHasSpecialChar(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains at least one uppercase letter.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasUpperCase('Must contain an uppercase letter')
+  /// ```
+  static FieldValidator hasUpperCase(String msg) =>
+      (value) => !isHasUpperCase(value) ? msg : null;
+
+  /// Returns a validator that checks if the field contains at least one lowercase letter.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasLowerCase('Must contain a lowercase letter')
+  /// ```
+  static FieldValidator hasLowerCase(String msg) =>
+      (value) => !isHasLowerCase(value) ? msg : null;
+
+  /// Returns a validator that checks if the field has at least [min] characters.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasMinLength(8, 'Minimum 8 characters required')
+  /// ```
+  static FieldValidator hasMinLength(int min, String msg) =>
+      (value) => !isHasMinLength(value, min) ? msg : null;
+
+  /// Returns a validator that checks if the field has at most [max] characters.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasMaxLength(16, 'Maximum 16 characters allowed')
+  /// ```
+  static FieldValidator hasMaxLength(int max, String msg) =>
+      (value) => !isHasMaxLength(value, max) ? msg : null;
+
+  /// Returns a validator that checks if the field matches the given [regex] pattern.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasRegex(r'^\d{4}', 'Minimum a 4-digit')
+  /// ```
+  static FieldValidator hasRegex(String regex, String msg) =>
+      (value) => !isHasRegex(value, regex) ? msg : null;
+
+  /// Combines multiple [validators] into a single validator.
+  /// Returns the first error message encountered, or null if all pass.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.combine([
+  ///   Validator.required('Required'),
+  ///   Validator.email('Invalid email'),
+  /// ])
+  /// ```
+  static FieldValidator combine(List<FieldValidator> validators) {
+    return (value) {
+      for (var validator in validators) {
+        final err = validator(value);
+        if (err != null) return err;
+      }
+      return null;
+    };
+  }
+
+  /// Returns a validator that checks if the field is a valid date and within optional boundaries.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.date('Enter a valid date', startDate: DateTime(2020, 1, 1), endDate: DateTime(2030, 12, 31))
+  /// ```
+  static FieldValidator date(String msg, {DateTime? startDate, DateTime? endDate, String format = 'dd/MM/yyyy'}) =>
+      (value) => !isValidDate(value, format: format, startDate: startDate, endDate: endDate) ? msg : null;
+
+  /// Checks if [value] matches the [regex] pattern.
+  static bool _isValid(String regex, String? value) {
+    if (value.isNullOrEmpty) return true;
+    return RegExp(regex).hasMatch(value!);
+  }
+
+  /// Returns true if [value] is not null or empty.
+  static bool isValidRequired(String? value) => value.isNotNullOrEmpty;
+
+  /// Returns true if [value] is a valid email address.
+  static bool isValidEmail(String? value) => _isValid(_emailPattern, value);
+
+  /// Returns true if [value] contains at least one letter.
+  static bool isHasLetter(String? value) => _isValid(_letterPattern, value);
+
+  /// Returns true if [value] contains at least one number.
+  static bool isHasNumber(String? value) => _isValid(_numberPattern, value);
+
+  /// Returns true if [value] contains at least one special character.
+  static bool isHasSpecialChar(String? value) => _isValid(_specialCharPattern, value);
+
+  /// Returns true if [value] contains at least one uppercase letter.
+  static bool isHasUpperCase(String? value) => _isValid(_upperCasePattern, value);
+
+  /// Returns true if [value] contains at least one lowercase letter.
+  static bool isHasLowerCase(String? value) => _isValid(_lowerCasePattern, value);
+
+  /// Returns true if [value] has at least [min] characters.
+  static bool isHasMinLength(String? value, int min) => value.isNullOrEmpty ? true : value!.trim().length >= min;
+
+  /// Returns true if [value] has at most [max] characters.
+  static bool isHasMaxLength(String? value, int max) => value.isNullOrEmpty ? true : value!.trim().length <= max;
+
+  /// Returns true if [value] matches the given [regex] pattern.
+  static bool isHasRegex(String? value, String regex) => _isValid(regex, value);
+
+  /// Returns true if [value] is a valid date according to the given [format] and within optional boundaries, using Intl's DateFormat.
+  /// Example:
+  /// ```dart
+  /// Validator.isValidDate('31/12/2023', format: 'dd/MM/yyyy', startDate: DateTime(2020, 1, 1), endDate: DateTime(2030, 12, 31));
+  /// ```
+  static bool isValidDate(String? value, {String format = 'dd/MM/yyyy', DateTime? startDate, DateTime? endDate}) {
+    if (value.isNullOrEmpty) return true;
+    try {
+      final date = DateFormat(format).parseStrict(value!);
+      if (startDate != null && date.isBefore(startDate)) return false;
+      if (endDate != null && date.isAfter(endDate)) return false;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Returns a validator that checks if the field matches the [other] value.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.match('password', 'Passwords do not match')
+  /// ```
+  static FieldValidator match(String other, String msg) =>
+      (value) => !isValidMatch(value, other) ? msg : null;
+
+  /// Returns true if [value] matches the [other] value.
+  ///
+  /// Example:
+  /// ```dart
+  /// Validator.isValidMatch('password', 'password');
+  /// ```
+  static bool isValidMatch(String? value, String other) => value?.trim() == other.trim();
+
+  /// Returns a validator that checks if the field contains only white space.
+  ///
+  /// Example:
+  /// ```dart
+  /// validator: Validator.hasOnlyWhiteSpace('Must not contain white space')
+  /// ```
+  static FieldValidator hasOnlyWhiteSpace(String msg) =>
+      (value) => value.isNotNullOrEmpty && value!.trim().isEmpty ? msg : null;
 }
 
 ```
