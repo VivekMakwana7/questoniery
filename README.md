@@ -1551,3 +1551,415 @@ extension ObjectNullableX on Object? {
   bool get isNotNullOrEmpty => !isNullOrEmpty;
 }
 ```
+
+# Input Formatters
+
+A collection of custom `TextInputFormatter`s for common formatting tasks, including currency, credit/debit cards, preventing leading spaces, and robust number handling.
+
+### 1. Currency Input Formatter (`CurrencyIF`)
+
+Formats numeric input as currency with live comma insertion, optional custom symbol, decimal precision, and locale awareness.
+
+#### Usage:
+
+```dart
+TextFormField(
+  inputFormatters: [
+    CurrencyIF.symbol(symbol: '₹', locale: 'en_IN'), // e.g., ₹1,23,456.00
+  ],
+)
+```
+
+#### Code:
+
+```dart
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+/// A custom [TextInputFormatter] for formatting currency input with commas, optional symbols,
+/// decimal precision, and smart cursor position handling during user edits.
+///
+/// ### Example Usage:
+/// ```dart
+/// TextFormField(
+///   inputFormatters: [
+///     CurrencyIF.symbol(symbol: '₹',locale:'en_IN'),
+///   ],
+/// )
+/// ```
+class CurrencyIF extends TextInputFormatter {
+  /// Currency symbol to prefix (e.g. ₹, $, €, etc.)
+  final String symbol;
+
+  /// Maximum allowed digits after the decimal point.
+  final int maxDecimalDigits;
+
+  /// Locale for currency formatting (e.g. 'en_IN', 'en_US', etc.)
+  final String locale;
+
+  CurrencyIF._({this.symbol = '\u20b9', this.maxDecimalDigits = 2, this.locale = 'en_IN'});
+
+  /// Factory for custom symbol
+  factory CurrencyIF.symbol({required String symbol, int maxDecimalDigits = 2, String locale = 'en_US'}) {
+    return CurrencyIF._(symbol: symbol, maxDecimalDigits: maxDecimalDigits, locale: locale);
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final newText = newValue.text;
+
+    // Strip symbols and commas
+    final rawNew = newText.replaceAll(RegExp('[^0-9.]'), '');
+
+    if (rawNew.isEmpty) {
+      return const TextEditingValue(text: '', selection: TextSelection.collapsed(offset: 0));
+    }
+
+    // Cursor logic: count digits before the original cursor
+    final newCursorIndex = newValue.selection.baseOffset;
+    final digitsBeforeCursor = _countDigitsBefore(newText, newCursorIndex);
+
+    // Split integer and decimal
+    final parts = rawNew.split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? parts[1] : '';
+
+    // Limit decimal digits
+    if (decimalPart.length > maxDecimalDigits) {
+      decimalPart = decimalPart.substring(0, maxDecimalDigits);
+    }
+
+    // Format only the integer part using NumberFormat.decimalPattern
+    final intFormatter = NumberFormat.decimalPattern(locale);
+    String formatted = intFormatter.format(int.tryParse(integerPart) ?? 0);
+
+    // If user typed a decimal point
+    bool hasDecimal = rawNew.contains('.');
+    if (hasDecimal) {
+      formatted += '.';
+      // Add only as many decimal digits as user typed (no padding)
+      formatted += decimalPart;
+    }
+
+    // --- Improved Cursor Handling ---
+    int newFormattedCursor;
+    // If the cursor is just before the decimal in the raw input, place it just before the decimal in the formatted output
+    int rawDecimalIndex = newText.indexOf('.');
+    if (hasDecimal && newCursorIndex == rawDecimalIndex) {
+      // Find the index of the decimal in the formatted string
+      int formattedDecimalIndex = formatted.indexOf('.');
+      newFormattedCursor = formattedDecimalIndex;
+    } else {
+      newFormattedCursor = _indexOfNthDigit(formatted, digitsBeforeCursor);
+    }
+    // --- End Improved Cursor Handling ---
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: newFormattedCursor),
+    );
+  }
+
+  /// Returns the number of digits before the cursor in the original input.
+  int _countDigitsBefore(String text, int cursor) {
+    return text.substring(0, cursor).replaceAll(RegExp(r'[^0-9]'), '').length;
+  }
+
+  /// Finds the index of the nth digit in formatted text (used to restore cursor).
+  int _indexOfNthDigit(String text, int digitPosition) {
+    int count = 0;
+    for (int i = 0; i < text.length; i++) {
+      if (RegExp(r'[0-9]').hasMatch(text[i])) {
+        if (count == digitPosition) {
+          return i;
+        }
+        count++;
+      }
+    }
+    return text.length;
+  }
+}
+```
+
+### 2. Credit/Debit Card Formatter (`DebitIF`)
+
+Automatically inserts a space every 4 digits for readability.
+
+#### Usage:
+
+```dart
+// Default: 16 digits
+TextField(
+  inputFormatters: [DebitIF()],
+)
+
+// Custom: 19 digits
+TextField(
+  inputFormatters: [DebitIF(maxLength: 19)],
+)
+```
+
+#### Code:
+
+```dart
+import 'package:flutter/services.dart';
+
+/// {@template card_input_formatter}
+/// A [TextInputFormatter] for credit/debit card number input.
+///
+/// - Automatically inserts a space every 4 digits (e.g., '1234 5678 9012 3456').
+/// - Supports flexible editing and robust cursor mapping.
+/// - Only allows digits and spaces in the formatted output.
+/// - The [maxLength] parameter controls the maximum number of digits (default: 16).
+///
+/// ## Usage Example
+///
+/// ```dart
+/// // Default: 16 digits
+/// TextField(
+///   inputFormatters: [CardInputFormatter()],
+/// )
+///
+/// // Custom: 19 digits (for some card types)
+/// TextField(
+///   inputFormatters: [CardInputFormatter(maxLength: 19)],
+/// )
+/// ```
+/// {@endtemplate}
+class DebitIF extends TextInputFormatter {
+  /// The maximum number of digits allowed in the card number.
+  final int maxLength;
+
+  /// Creates a [DebitIF] with an optional [maxLength] (default: 16).
+  DebitIF({this.maxLength = 16});
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final rawText = newValue.text;
+    final selectionIndex = newValue.selection.baseOffset;
+
+    // Remove all non-digit characters
+    final digitsOnly = rawText.replaceAll(RegExp(r'[^0-9]'), '');
+    final clampedDigits = digitsOnly.substring(0, digitsOnly.length.clamp(0, maxLength));
+
+    // Format: insert a space every 4 digits
+    final buffer = StringBuffer();
+    List<int> rawToFormatted = [];
+    int rawDigitIndex = 0;
+    int formattedIndex = 0;
+    for (; rawDigitIndex < clampedDigits.length; rawDigitIndex++) {
+      if (rawDigitIndex > 0 && rawDigitIndex % 4 == 0) {
+        buffer.write(' ');
+        formattedIndex++;
+      }
+      buffer.write(clampedDigits[rawDigitIndex]);
+      rawToFormatted.add(formattedIndex);
+      formattedIndex++;
+    }
+    final formattedText = buffer.toString();
+
+    // Calculate new cursor position
+    int rawDigitsBeforeCursor = 0;
+    for (int i = 0; i < selectionIndex && i < rawText.length; i++) {
+      if (RegExp(r'[0-9]').hasMatch(rawText[i])) {
+        rawDigitsBeforeCursor++;
+      }
+    }
+    int adjustedCursorPosition;
+    if (rawDigitsBeforeCursor == 0) {
+      adjustedCursorPosition = 0;
+    } else if (rawDigitsBeforeCursor <= rawToFormatted.length) {
+      adjustedCursorPosition = rawToFormatted[rawDigitsBeforeCursor - 1] + 1;
+    } else {
+      adjustedCursorPosition = formattedText.length;
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: adjustedCursorPosition.clamp(0, formattedText.length)),
+    );
+  }
+}
+```
+
+### 3. No Leading Space Formatter (`NoLeadingSpaceIF`)
+
+Prevents the user from starting the input with a space.
+
+#### Usage:
+
+```dart
+TextField(
+  inputFormatters: [NoLeadingSpaceIF()],
+)
+```
+
+#### Code:
+
+```dart
+import 'package:flutter/services.dart';
+
+/// {@template no_leading_space_input_formatter}
+/// A [TextInputFormatter] that prevents the user from entering a leading space.
+/// {@endtemplate}
+class NoLeadingSpaceIF extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    // If the new text starts with a space, remove it
+    if (newValue.text.startsWith(' ')) {
+      final trimmed = newValue.text.replaceFirst(RegExp(r'^ +'), '');
+      final diff = newValue.text.length - trimmed.length;
+      return TextEditingValue(
+        text: trimmed,
+        selection: newValue.selection.copyWith(
+          baseOffset: (newValue.selection.baseOffset - diff).clamp(0, trimmed.length),
+          extentOffset: (newValue.selection.extentOffset - diff).clamp(0, trimmed.length),
+        ),
+      );
+    }
+    return newValue;
+  }
+}
+
+```
+
+### 4. Numeric Only Formatter (`NumberOnlyIF`)
+
+A highly configurable formatter for restricting input to numbers, with options for decimals and negative values.
+
+#### Usage:
+
+```dart
+// Integer only
+TextField(inputFormatters: [NumberOnlyIF.integer()])
+
+// Decimal allowed, max 2 digits
+TextField(inputFormatters: [NumberOnlyIF.decimal(decimalLimit: 2)])
+
+// Allow negative values
+TextField(inputFormatters: [NumberOnlyIF.decimal(allowNegative: true)])
+```
+
+#### Code:
+
+```dart
+import 'package:flutter/services.dart';
+
+/// A [TextInputFormatter] that allows only numbers, with optional decimal and negative support.
+class NumberOnlyIF extends TextInputFormatter {
+  /// If true, allows a decimal point ('.') and numbers can start with 0.
+  /// If false, only integers are allowed and cannot start with 0 (unless '0').
+  final bool decimalAllowed;
+
+  /// The maximum number of digits allowed after the decimal point (if decimalAllowed is true).
+  final int? decimalLimit;
+
+  /// If true, allows a single leading '-' for negative numbers.
+  final bool allowNegative;
+
+  NumberOnlyIF._({this.decimalAllowed = false, this.decimalLimit, this.allowNegative = false});
+
+  /// Creates a [NumberOnlyIF] for decimal numbers, with an optional [decimalLimit] and [allowNegative].
+  factory NumberOnlyIF.decimal({int? decimalLimit, bool allowNegative = false}) =>
+      NumberOnlyIF._(decimalAllowed: true, decimalLimit: decimalLimit, allowNegative: allowNegative);
+
+  /// Creates a [NumberOnlyIF] for integers only, with optional [allowNegative].
+  factory NumberOnlyIF.integer({bool allowNegative = false}) =>
+      NumberOnlyIF._(decimalAllowed: false, allowNegative: allowNegative);
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    String text = newValue.text;
+    int selectionIndex = newValue.selection.baseOffset;
+
+    // Remove all non-digit and (optionally) non-decimal/non-negative characters
+    String filtered = '';
+    int decimalCount = 0;
+    int decimalIndex = -1;
+    bool hasNegative = false;
+    for (int i = 0; i < text.length; i++) {
+      final char = text[i];
+      if (allowNegative && char == '-' && filtered.isEmpty && !hasNegative) {
+        filtered += char;
+        hasNegative = true;
+        if (i < selectionIndex) selectionIndex++;
+      } else if (RegExp(r'[0-9]').hasMatch(char)) {
+        // If decimalLimit is set, check if we're after the decimal
+        if (decimalAllowed &&
+            decimalLimit != null &&
+            decimalIndex != -1 &&
+            filtered.length - (hasNegative ? 1 : 0) > decimalIndex) {
+          int afterDecimal = filtered.length - decimalIndex - 1 - (hasNegative ? 1 : 0);
+          if (afterDecimal >= decimalLimit!) {
+            if (i < selectionIndex) selectionIndex--;
+            continue;
+          }
+        }
+        filtered += char;
+      } else if (decimalAllowed && char == '.') {
+        if (decimalCount == 0) {
+          filtered += char;
+          decimalCount++;
+          decimalIndex = filtered.length - 1 - (hasNegative ? 1 : 0);
+        } else {
+          // skip extra decimals
+          if (i < selectionIndex) selectionIndex--;
+        }
+      } else {
+        if (i < selectionIndex) selectionIndex--;
+      }
+    }
+
+    // Integer only: cannot start with 0 (unless '0' or '-0')
+    if (!decimalAllowed) {
+      if (filtered.length > 1 && filtered.startsWith('0')) {
+        filtered = filtered.replaceFirst(RegExp(r'^0+'), '');
+        if (filtered.isEmpty) filtered = '0';
+        selectionIndex = filtered.length;
+      } else if (filtered.length > 2 && filtered.startsWith('-0')) {
+        filtered = '-${filtered.substring(2).replaceFirst(RegExp(r'^0+'), '')}';
+        if (filtered == '-') filtered = '-0';
+        selectionIndex = filtered.length;
+      }
+    }
+
+    // If decimal allowed, allow leading 0 and allow typing '.'
+    // But do not allow more than one '.'
+    if (decimalAllowed) {
+      // Prevent multiple leading zeros before decimal (e.g., 00.12 -> 0.12)
+      if (filtered.startsWith('00')) {
+        filtered = filtered.replaceFirst(RegExp(r'^0+'), '0');
+        selectionIndex = filtered.length;
+      } else if (filtered.startsWith('-00')) {
+        filtered = '-${filtered.substring(1).replaceFirst(RegExp(r'^0+'), '0')}';
+        selectionIndex = filtered.length;
+      }
+      // Prevent starting with '.' (force to '0.')
+      if (filtered.startsWith('.')) {
+        filtered = '0$filtered';
+        selectionIndex++;
+      } else if (filtered.startsWith('-.')) {
+        filtered = '-0.${filtered.substring(2)}';
+        selectionIndex++;
+      }
+    }
+
+    // --- Cursor fix for deleting just before the dot ---
+    if (decimalAllowed && oldValue.text.contains('.') && filtered.contains('.')) {
+      final oldDot = oldValue.text.indexOf('.');
+      final newDot = filtered.indexOf('.');
+      // If the user deleted the char just before the dot
+      if (oldValue.selection.baseOffset == oldDot && newValue.selection.baseOffset == oldDot) {
+        // Place cursor just before the dot
+        selectionIndex = newDot;
+      }
+    }
+    // --- End cursor fix ---
+
+    return TextEditingValue(
+      text: filtered,
+      selection: TextSelection.collapsed(offset: selectionIndex.clamp(0, filtered.length)),
+    );
+  }
+}
+```
