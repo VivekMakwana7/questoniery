@@ -1963,3 +1963,140 @@ class NumberOnlyIF extends TextInputFormatter {
   }
 }
 ```
+
+# App Theme Setup
+
+This section outlines the setup for defining light and dark themes, including text themes and global `ThemeData` configurations. This setup leverages the `AppColors` and `AppTextColors` extensions defined earlier.
+
+### 1. App Text Theme (`app_text_theme.dart`)
+
+Defines responsive text styles for both light and dark modes, defaulting to the 'Roboto' font (configurable).
+
+```dart
+import 'package:flutter/material.dart';
+
+// Ensure you import your AppColors/AppTextColors definition here
+// import 'package:your_app/app_colors.dart'; 
+
+/// Helper to generate text styles with responsive size and color.
+/// If color is not provided, uses the theme's primary text color.
+TextStyle appTextStyle(double size, FontWeight weight, {Color? color, bool isDark = false}) => TextStyle(
+  fontSize: size,
+  fontWeight: weight,
+  height: 1.1,
+  color: color ?? (isDark ? AppTextColors.dark.primary : AppTextColors.light.primary),
+);
+String? _fontFamily;
+
+String get fontFamily => _fontFamily ??= 'Roboto';
+
+set fontFamily(String name) => _fontFamily = name;
+
+/// Custom Material 3 text theme for light mode.
+final TextTheme appTextThemeLight = TextTheme(
+  displayLarge: appTextStyle(57, FontWeight.w400),
+  displayMedium: appTextStyle(45, FontWeight.w400),
+  displaySmall: appTextStyle(36, FontWeight.w400),
+  headlineLarge: appTextStyle(32, FontWeight.w400),
+  headlineMedium: appTextStyle(28, FontWeight.w400),
+  headlineSmall: appTextStyle(24, FontWeight.w400),
+  titleLarge: appTextStyle(22, FontWeight.w400),
+  titleMedium: appTextStyle(16, FontWeight.w500),
+  titleSmall: appTextStyle(14, FontWeight.w500),
+  bodyLarge: appTextStyle(16, FontWeight.w400),
+  bodyMedium: appTextStyle(14, FontWeight.w400),
+  bodySmall: appTextStyle(12, FontWeight.w400),
+  labelLarge: appTextStyle(14, FontWeight.w500),
+  labelMedium: appTextStyle(12, FontWeight.w500),
+  labelSmall: appTextStyle(11, FontWeight.w500),
+).apply(fontFamily: fontFamily);
+
+/// Custom Material 3 text theme for dark mode.
+final TextTheme appTextThemeDark = TextTheme(
+  displayLarge: appTextStyle(57, FontWeight.w400, isDark: true),
+  displayMedium: appTextStyle(45, FontWeight.w400, isDark: true),
+  displaySmall: appTextStyle(36, FontWeight.w400, isDark: true),
+  headlineLarge: appTextStyle(32, FontWeight.w400, isDark: true),
+  headlineMedium: appTextStyle(28, FontWeight.w400, isDark: true),
+  headlineSmall: appTextStyle(24, FontWeight.w400, isDark: true),
+  titleLarge: appTextStyle(22, FontWeight.w400, isDark: true),
+  titleMedium: appTextStyle(16, FontWeight.w500, isDark: true),
+  titleSmall: appTextStyle(14, FontWeight.w500, isDark: true),
+  bodyLarge: appTextStyle(16, FontWeight.w400, isDark: true),
+  bodyMedium: appTextStyle(14, FontWeight.w400, isDark: true),
+  bodySmall: appTextStyle(12, FontWeight.w400, isDark: true),
+  labelLarge: appTextStyle(14, FontWeight.w500, isDark: true),
+  labelMedium: appTextStyle(12, FontWeight.w500, isDark: true),
+  labelSmall: appTextStyle(11, FontWeight.w500, isDark: true),
+).apply(fontFamily: fontFamily);
+```
+
+### 2. App Light Theme (`app_light_theme.dart`)
+
+Configures the standard `ThemeData` for light mode.
+
+```dart
+/// Provides the light theme for the app.
+final ThemeData appThemeLight = ThemeData.light(useMaterial3: true).copyWith(
+  colorScheme: ColorScheme.light(
+    primary: AppColors.light.primary,
+    secondary: AppColors.light.secondary,
+    onSecondary: Colors.white,
+    outline: AppColors.light.outlineColor,
+    error: AppColors.light.error,
+  ),
+  disabledColor: AppColors.light.disableColor,
+  scaffoldBackgroundColor: AppColors.light.scaffoldBackground,
+  appBarTheme: AppBarTheme(
+    centerTitle: false,
+    foregroundColor: AppTextColors.light.primary,
+    elevation: 0,
+    titleTextStyle: appTextThemeLight.titleMedium,
+    scrolledUnderElevation: 0,
+  ),
+  textTheme: appTextThemeLight,
+  extensions: const <ThemeExtension<dynamic>>[AppColors.light, AppTextColors.light],
+  dividerTheme: DividerThemeData(color: AppColors.light.outlineColor),
+);
+```
+
+### 3. App Dark Theme (`app_dark_theme.dart`)
+
+Configures the standard `ThemeData` for dark mode.
+
+```dart
+/// Provides the dark theme for the app.
+final ThemeData appThemeDark = ThemeData.dark(useMaterial3: true).copyWith(
+  colorScheme: ColorScheme.dark(
+    primary: AppColors.dark.primary,
+    secondary: AppColors.dark.secondary,
+    outline: AppColors.dark.outlineColor,
+    error: AppColors.dark.error,
+  ),
+  scaffoldBackgroundColor: AppColors.dark.scaffoldBackground,
+  disabledColor: AppColors.dark.disableColor,
+  appBarTheme: AppBarTheme(
+    centerTitle: false,
+    foregroundColor: AppTextColors.dark.primary,
+    elevation: 0,
+    titleTextStyle: appTextThemeDark.titleMedium,
+    scrolledUnderElevation: 0,
+  ),
+  textTheme: appTextThemeDark,
+  extensions: const <ThemeExtension<dynamic>>[AppColors.dark, AppTextColors.dark],
+  dividerTheme: DividerThemeData(color: AppColors.dark.outlineColor),
+);
+```
+
+### Usage
+
+To use these themes, simply pass them to your `MaterialApp`:
+
+```dart
+MaterialApp(
+  theme: appThemeLight,
+  darkTheme: appThemeDark,
+  themeMode: ThemeMode.system, // or ThemeMode.light / ThemeMode.dark
+  home: const MyHomePage(),
+);
+```
