@@ -10,7 +10,7 @@ export class ChatService {
     private readmeCache: string | null = null;
 
     constructor(private configService: ConfigService) {
-        const rawApiKey = 'AIzaSyDUM3cSnVgGMkL574KEwMtANhkJiz2GJ3M';
+        const rawApiKey = 'AIzaSyBQ95KKyvU-JifEdyHM-NxW4ikC-ZTDpi8';
         if (!rawApiKey) {
             console.warn('GEMINI_API_KEY is not defined in .env file');
             this.genAI = new GoogleGenerativeAI('unavailable');

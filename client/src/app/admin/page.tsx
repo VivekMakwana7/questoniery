@@ -23,7 +23,8 @@ export default function AdminPage() {
     const fetchReadme = async () => {
         setIsLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com/chat';
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com';
+            const apiUrl = baseUrl.endsWith('/chat') ? baseUrl : `${baseUrl}/chat`;
             const response = await fetch(`${apiUrl}/readme`);
             const data = await response.json();
             setReadmeContent(data.content);
@@ -39,7 +40,8 @@ export default function AdminPage() {
         setIsLoading(true);
         setStatus({ type: null, message: '' });
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com/chat';
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com';
+            const apiUrl = baseUrl.endsWith('/chat') ? baseUrl : `${baseUrl}/chat`;
             const response = await fetch(`${apiUrl}/readme`, {
                 method: 'POST',
                 headers: {

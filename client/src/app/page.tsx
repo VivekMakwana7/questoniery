@@ -154,7 +154,8 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com/chat';
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://questoniery-backend.onrender.com';
+      const apiUrl = baseUrl.endsWith('/chat') ? baseUrl : `${baseUrl}/chat`;
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
